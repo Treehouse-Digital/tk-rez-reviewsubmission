@@ -1,0 +1,13 @@
+display_name: Submit for Review
+description: |
+    Rez based app to render and submit a movie to SG for review.
+
+configuration:
+    init_hook:
+        type: hook
+        description: Hook that is executed when the app is initialized.
+        default_value: "{self}/init.py"
+    settings_hook:
+        type: hook
+        description: Hook for configuring settings to use at runtime
+        default_value: "{self}/settings.py"
