@@ -1,6 +1,10 @@
 """App definition for the Rez Review Submission app."""
 
+from typing import TypeAlias
+
 import sgtk
+
+Settings: TypeAlias = type
 
 
 class RezReviewSubmissionApp(sgtk.platform.Application):
@@ -9,18 +13,25 @@ class RezReviewSubmissionApp(sgtk.platform.Application):
     def init_app(self) -> None:
         """Run init hook."""
         self.tk_rez_reviewsubmission = self.import_module("tk_rez_reviewsubmission")
-
-        self.init_hook = self.create_hook_instance(
-            "init_hook", base_class=self.tk_rez_reviewsubmission.base_hooks.InitHook
+        self.hook = self.create_hook_instance(
+            "hook", base_class=self.tk_rez_reviewsubmission.BaseHook
         )
-        self.init_hook.pre()
-
-        self.settings_hook = self.create_hook_instance("settings_hook")
-        self.run_hook = self.create_hook_instance("run_hook")
-
-        self.init_hook.post()
+        self.hook.app_init()
 
     @property
     def context_change_allowed(self) -> bool:
         """Always allow context changes for this app."""
         return True
+
+    @property
+    def settings_class(self) -> Settings:
+        """Return the runtime settings class."""
+        return self.hook.settings_class
+
+    def submit(self, settings: Settings) -> object:
+        """Run the submit hook."""
+        return (
+            self.hook.run(settings)
+            if self.hook.in_required_runtime()
+            else self.hook.run_in_rez_subprocess(settings)
+        )

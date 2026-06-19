@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class Hook(HookBaseClass):
+__all__ = ["BaseHook"]
+
+
+class BaseHook(HookBaseClass):
     """Hook that is executed when the app is initialized.
 
     By default it does nothing.
