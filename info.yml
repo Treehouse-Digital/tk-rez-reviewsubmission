@@ -11,3 +11,7 @@ configuration:
         type: hook
         description: Hook for configuring settings to use at runtime
         default_value: "{self}/settings.py"
+    run_hook:
+        type: hook
+        description: Hook for loading runtime settings and performing any processing
+        default_value: "{self}/run.py"
