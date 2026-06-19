@@ -1,0 +1,17 @@
+# Used for centralised Python tooling settings
+# i.e. avoids separate tox.ini, coverage.ini, ruff.toml, .coveragerc
+# unless they're used to bake expanded/non-env-var configs
+[tool.ruff]
+extend = "$TH_PIPELINE_ROOT/config/global-ruff.toml"
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["G004", "S603", "S607", "EXE003", "COM812", "COM819", "D212", "D213", "D203", "D211"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["INP001", "ANN201", "PLC0415", "ANN001", "SLF001", "PLR2004", "S101", "ARG", "FBT"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"package.py" = ["PLC0415", "F821", "INP001"]
+"build.py" = ["INP001"]
