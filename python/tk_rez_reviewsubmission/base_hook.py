@@ -1,4 +1,14 @@
-"""Base Init hook for the app."""
+"""Base hook for the app.
+
+Sub-classes should implement:
+
+- `.settings_class` property to return the runtime settings class.
+- `.in_required_rez_env` method to determine if the current process is running in the
+  required Rez environment.
+- `.run_in_rez_subprocess` method to spawn a new process in the required runtime with
+  the given settings.
+- `.run` method to run the main routine with the given settings and app's context.
+"""
 
 from __future__ import annotations
 
@@ -13,10 +23,15 @@ import sgtk
 if TYPE_CHECKING:
     from types import ModuleType
 
+from .rez_requirement import current_rez_resolved_packages
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
 __all__ = ["BaseHook"]
+
+Settings: type = type
+RunReturn: type = object
 
 
 class BaseHook(HookBaseClass):
@@ -24,6 +39,11 @@ class BaseHook(HookBaseClass):
 
     By default it does nothing.
     """
+
+    @classmethod
+    def current_rez_resolved_packages(cls) -> dict[str, str]:
+        """Return the current resolved Rez packages."""
+        return current_rez_resolved_packages()
 
     @property
     def settings_class(self) -> type:
@@ -93,7 +113,7 @@ class BaseHook(HookBaseClass):
 
     @property
     def hook_file_path(self) -> Path:
-        """Return the tk-rez-reviewsubmission module."""
+        """Return the file path of the hook instance's module."""
         if not (
             (hook_module := inspect.getmodule(self))
             and (file_str := inspect.getabsfile(hook_module))
@@ -108,11 +128,24 @@ class BaseHook(HookBaseClass):
         raise NotImplementedError
 
     def in_required_runtime(self) -> bool:
-        """Return True if the current process is running in the required runtime."""
+        """Return True if the current process is running in the required runtime.
+
+        By default just checks if we are in the required Rez environment, but can be
+        extended to check e.g. we're specifically in Nuke Studio or Houdini FX
+        """
         return self.in_required_rez_env()
 
     def app_init(self) -> None:
         """Initialise routine run when the app is initialized.
 
-        This is called right after the hook instance is created.
+        This is called right after the hook instance is created and does nothing by
+        default.
         """
+
+    def run_in_rez_subprocess(self, settings: Settings) -> RunReturn:
+        """Spawn a new process in the required runtime with the given settings."""
+        raise NotImplementedError
+
+    def run(self, settings: Settings) -> RunReturn:
+        """Run the main routine with the given settings and app's context."""
+        raise NotImplementedError

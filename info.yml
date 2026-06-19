@@ -3,15 +3,7 @@ description: |
     Rez based app to render and submit a movie to SG for review.
 
 configuration:
-    init_hook:
+    hook:
         type: hook
         description: Hook that is executed when the app is initialized.
-        default_value: "{self}/init.py"
-    settings_hook:
-        type: hook
-        description: Hook for configuring settings to use at runtime
-        default_value: "{self}/settings.py"
-    run_hook:
-        type: hook
-        description: Hook for loading runtime settings and performing any processing
-        default_value: "{self}/run.py"
+        default_value: "{self}/nuke_render_color_bars.py"
