@@ -7,7 +7,7 @@ Rez environment based, extensible review submission app
 
 ## Overview
 
-![main-flow.png](./docs/_resources/main-flow.png)
+![main-flow](./docs/_resources/main-flow.svg)
 
 ### Default Config
 
