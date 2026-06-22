@@ -7,6 +7,7 @@ import dataclasses
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,7 +17,12 @@ import sgtk
 if TYPE_CHECKING:
     import shotgun_api3
 
-HookBaseClass = sgtk.get_hook_baseclass()
+try:
+    HookBaseClass = sgtk.get_hook_baseclass()
+except AttributeError:  # v0.23.2: '_thread._local' object has no attribute 'value'
+    # This might happen during sub-process runtime environments, which we don't care
+    # about the base class in that case since we're just focusing on running _cli()
+    HookBaseClass = sgtk.Hook
 
 
 @dataclasses.dataclass
@@ -33,13 +39,25 @@ class Hook(HookBaseClass):
     """Implement basic Nuke graph creation dispatch routines."""
 
     @property
-    def settings_class(self) -> type:
+    def settings_class(self) -> type[Settings]:
         """Return the settings class to use for the app."""
         return Settings
 
     def in_required_rez_env(self) -> bool:
         """Whether the current process is running in the required Rez environment."""
         return {"nuke", "tk_core"} & set(self.current_rez_resolved_packages())
+
+    def in_required_runtime(self) -> bool:
+        """Whether the current process is in right Rez solve and in Nuke itself."""
+        if result := self.in_required_rez_env():
+            try:
+                import nuke  # noqa: PLC0415
+
+                result = sys.executable == nuke.env["ExecutablePath"]
+            except (ImportError, KeyError):
+                result = False
+
+        return result
 
     def run_in_rez_subprocess(self, settings: Settings) -> None:
         """Spawn a new process in the required runtime with the given settings."""
@@ -51,7 +69,7 @@ class Hook(HookBaseClass):
             temp_file.flush()
 
             cmd_args += [str(self.hook_file_path), str(Path(temp_file.name).resolve())]
-            subprocess.run(cmd_args, check=True, capture_output=True, env=env)
+            subprocess.run(cmd_args, check=True, env=env)
 
     def run(self, settings: Settings) -> None:
         """Run the main routine with the given settings and app's context."""
@@ -69,11 +87,11 @@ def main(settings: Settings, context: sgtk.Context) -> None:
     color_bar_node = nuke.nodes.ColorBars(
         name=settings.color_bars_name, format=settings.color_bars_format
     )
-    color_bar_node.seSelected(True)  # noqa: FBT003
+    color_bar_node.setSelected(True)
 
     write_node = nuke.nodes.Write(name="WriteColorBars", file_type="mov")
     write_node.setInput(0, color_bar_node)
-    write_node.seSelected(True)  # noqa: FBT003
+    write_node.setSelected(True)
 
     for knob_name, knob_value in settings.out_settings.items():
         knob = write_node.knob(knob_name)
@@ -90,6 +108,7 @@ def main(settings: Settings, context: sgtk.Context) -> None:
 
 
 def _cli() -> None:
+    """Parse CLI arguments and run the main routine."""
     parser = argparse.ArgumentParser()
     parser.add_argument("JSON_PATH", type=Path)
     args = parser.parse_args()

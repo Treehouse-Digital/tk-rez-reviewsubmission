@@ -13,9 +13,10 @@ class RezReviewSubmissionApp(sgtk.platform.Application):
     def init_app(self) -> None:
         """Run init hook."""
         self.tk_rez_reviewsubmission = self.import_module("tk_rez_reviewsubmission")
-        self.hook = self.create_hook_instance(
-            "hook", base_class=self.tk_rez_reviewsubmission.BaseHook
-        )
+
+        base_class: type = self.tk_rez_reviewsubmission.BaseHook
+        hook_expr: str = self.get_setting("hook")
+        self.hook = self.create_hook_instance(hook_expr, base_class=base_class)
         self.hook.app_init()
 
     @property
@@ -24,7 +25,7 @@ class RezReviewSubmissionApp(sgtk.platform.Application):
         return True
 
     @property
-    def settings_class(self) -> Settings:
+    def settings_class(self) -> type[Settings]:
         """Return the runtime settings class."""
         return self.hook.settings_class
 
